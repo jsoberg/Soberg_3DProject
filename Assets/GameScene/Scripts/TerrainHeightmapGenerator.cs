@@ -17,8 +17,8 @@ public class TerrainHeightmapGenerator : MonoBehaviour
         {
             for (int y = 0; y < TD.heightmapHeight; y++)
             {
-                float perlinX = ((float)x / (float)TD.heightmapWidth) * 10f;
-                float perlinY = ((float)y / (float)TD.heightmapHeight) * 10f;
+                float perlinX = ((float)x / (float)TD.heightmapWidth) * 8f;
+                float perlinY = ((float)y / (float)TD.heightmapHeight) * 6f;
                 float noise = Mathf.PerlinNoise(perlinX, perlinY);
                 HeightMap[x, y] = noise;
             }
