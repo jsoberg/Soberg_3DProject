@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Linq; // used for Sum of array
 
-public class SplatMapDemo : MonoBehaviour
+public class MountainSideSplatMap : MonoBehaviour
 {
     void Start()
     {
