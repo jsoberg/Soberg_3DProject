@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Linq; // used for Sum of array
+using System.Linq;
 
 public class MountainSideSplatMap : MonoBehaviour
 {
@@ -8,8 +8,6 @@ public class MountainSideSplatMap : MonoBehaviour
     {
         Terrain terrain = GetComponent<Terrain>();
         TerrainData terrainData = terrain.terrainData;
-
-        // Splatmap data is stored internally as a 3d array of floats, so declare a new empty array ready for your custom splatmap data:
         float[,,] splatmapData = new float[terrainData.alphamapWidth, terrainData.alphamapHeight, terrainData.alphamapLayers];
 
         for (int y = 0; y < terrainData.alphamapHeight; y++)
@@ -32,19 +30,15 @@ public class MountainSideSplatMap : MonoBehaviour
                 // Setup an array to record the mix of texture weights at this point
                 float[] splatWeights = new float[terrainData.alphamapLayers];
 
-                // CHANGE THE RULES BELOW TO SET THE WEIGHTS OF EACH TEXTURE ON WHATEVER RULES YOU WANT
 
                 // Texture[0] has constant influence
                 splatWeights[0] = 0.8f;
-
                 // Texture[1] is stronger at lower altitudes
                 splatWeights[1] = Mathf.Clamp01((terrainData.heightmapHeight - height));
-
                 // Texture[2] stronger on flatter terrain
                 // Note "steepness" is unbounded, so we "normalise" it by dividing by the extent of heightmap height and scale factor
                 // Subtract result from 1.0 to give greater weighting to flat surfaces
                 splatWeights[2] = 2.0f - Mathf.Clamp01(steepness * steepness / (terrainData.heightmapHeight / 5.0f));
-
                 // Texture[3] increases with height but only on surfaces facing positive Z axis 
                 splatWeights[3] = (height / 32) * Mathf.Clamp01(normal.z);
 
