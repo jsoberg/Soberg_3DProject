@@ -13,8 +13,29 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
         SeedHeightmap(heightMap, width, height);
 
         Divide(height, heightMap, width, height, max);
+        BlendHeightmapEdges(heightMap, width, height);
 
         return heightMap;
+    }
+
+    private void BlendHeightmapEdges(float[,] heightMap, int width, int height)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            { 
+                heightMap[i, (height - 1) - j] = 0;
+            }
+        }
+
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                float current = heightMap[i, j];
+                heightMap[i, j] = 0;
+            }
+        }
     }
 
     private void SeedHeightmap(float[,] heightMap, int width, int height)
