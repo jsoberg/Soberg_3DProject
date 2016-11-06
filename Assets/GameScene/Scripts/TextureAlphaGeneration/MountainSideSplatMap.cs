@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Linq;
 
-public class MountainSideSplatMap : MonoBehaviour
+public class MountainSideSplatMap : TextureAlphaGenerator
 {
-    void Start()
+    public override void RegenerateTextureAlphas()
     {
         Terrain terrain = GetComponent<Terrain>();
         TerrainData terrainData = terrain.terrainData;

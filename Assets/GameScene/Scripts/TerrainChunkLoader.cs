@@ -15,7 +15,9 @@ public class TerrainChunkLoader : MonoBehaviour
     void Start()
     {
         GenerateInitial(BackTerrain.terrainData);
+        BackTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
         GenerateInitial(FrontTerrain.terrainData);
+        FrontTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
         CurrentChunkEndX += FrontTerrain.terrainData.size.x * 2;
 
         // Start loading up for when we swap later on.
@@ -45,6 +47,7 @@ public class TerrainChunkLoader : MonoBehaviour
             TerrainData loadedTerrain = FrontTerrain.terrainData;
             float[,] heightmap = WaitForNextHeightmap();
             loadedTerrain.SetHeights(0,0, heightmap);
+            FrontTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
             LoadNextHeightmapAsync(
                 loadedTerrain.heightmapWidth, loadedTerrain.heightmapHeight, (int)loadedTerrain.size.y);
         }

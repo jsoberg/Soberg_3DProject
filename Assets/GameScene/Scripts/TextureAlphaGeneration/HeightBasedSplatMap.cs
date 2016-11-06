@@ -2,21 +2,11 @@
 using System.Collections;
 using System.Linq;
 
-public class HeightBasedSplatMap : MonoBehaviour
+public class HeightBasedSplatMap : TextureAlphaGenerator
 {
     public float PercentageOfTextureBasedOnHeight = .8f;
 
-    private bool AreSplatMapsInitialized = false;
-
-    void LateUpdate()
-    {
-        if (!AreSplatMapsInitialized) {
-            UpdateSplatMaps();
-            AreSplatMapsInitialized = true;
-        }
-    }
-
-    private void UpdateSplatMaps()
+    public override void RegenerateTextureAlphas()
     {
         Terrain terrain = GetComponent<Terrain>();
         TerrainData terrainData = terrain.terrainData;
