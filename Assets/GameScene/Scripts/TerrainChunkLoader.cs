@@ -8,7 +8,7 @@ public class TerrainChunkLoader : MonoBehaviour
     public Terrain BackTerrain;
 
     public HeightmapGenerator HeightmapGenerator;
-    public int ThreshholdForChunkLoad = 800;
+    public int ThreshholdForChunkLoad = 1024;
 
     private float CurrentChunkEndX = 0;
 
@@ -33,7 +33,7 @@ public class TerrainChunkLoader : MonoBehaviour
         int max = (int) td.size.y;
 
         float[,] heightmap = HeightmapGenerator.GenerateHeightMap(width, height, max);
-        td.SetHeights(0,0,heightmap);
+        td.SetHeights(0,0, heightmap);
     }
 
 	void Update ()
@@ -44,7 +44,7 @@ public class TerrainChunkLoader : MonoBehaviour
 
             TerrainData loadedTerrain = FrontTerrain.terrainData;
             float[,] heightmap = WaitForNextHeightmap();
-            loadedTerrain.SetHeights(0,0,heightmap);
+            loadedTerrain.SetHeights(0,0, heightmap);
             LoadNextHeightmapAsync(
                 loadedTerrain.heightmapWidth, loadedTerrain.heightmapHeight, (int)loadedTerrain.size.y);
         }
@@ -61,6 +61,7 @@ public class TerrainChunkLoader : MonoBehaviour
         BackTerrain = oldFront;
 
         BackTerrain.SetNeighbors(null, FrontTerrain, null, null);
+        FrontTerrain.SetNeighbors(null, null, null, BackTerrain);
 
         CurrentChunkEndX += movement / 2;
     }

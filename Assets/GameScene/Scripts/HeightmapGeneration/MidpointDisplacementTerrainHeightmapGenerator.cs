@@ -4,14 +4,25 @@ using System.Linq;
 
 public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 {
-    public readonly float Seed = 400f;
-    public readonly float Roughness = .6f;
+    public float Seed = 0f;
+    public float Roughness = .6f;
 
     public override float[,] GenerateHeightMap(int width, int height, int max)
     {
         float[,] heightMap = new float[width, height];
+        SeedHeightmap(heightMap, width, height);
+
         Divide(height, heightMap, width, height, max);
+
         return heightMap;
+    }
+
+    private void SeedHeightmap(float[,] heightMap, int width, int height)
+    {
+        heightMap[0, 0] = Seed;
+        heightMap[width - 1, 0] = Seed;
+        heightMap[width - 1, height - 1] = Seed;
+        heightMap[0, height - 1] = Seed;
     }
 
     private void Divide(int size, float[,] heightMap, int width, int height, int max)
