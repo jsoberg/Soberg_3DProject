@@ -7,34 +7,28 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
     public float Seed = 0f;
     public float Roughness = .6f;
 
+    private float[,] LastHeightMap;
+
     public override float[,] GenerateHeightMap(int width, int height, int max)
     {
         float[,] heightMap = new float[width, height];
         SeedHeightmap(heightMap, width, height);
-
-        Divide(height, heightMap, width, height, max);
         BlendHeightmapEdges(heightMap, width, height);
 
+        Divide(height, heightMap, width, height, max);
+
+        LastHeightMap = heightMap;
         return heightMap;
     }
 
     private void BlendHeightmapEdges(float[,] heightMap, int width, int height)
     {
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < 10; j++)
-            { 
-                heightMap[i, (height - 1) - j] = 0;
-            }
+        if (LastHeightMap == null) {
+            return;
         }
 
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < 10; j++)
-            {
-                float current = heightMap[i, j];
-                heightMap[i, j] = 0;
-            }
+        for (int i = 0; i < width; i++) {
+            heightMap[i, (height - 1)] = LastHeightMap[i, 0];
         }
     }
 
@@ -75,6 +69,10 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Square(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
+        if (y == 0) {
+            return;
+        }
+
         float[] corners = {
          heightMap[Mathf.Max(0, x - size), Mathf.Max(0, y - size)],                   // upper left corner
          heightMap[Mathf.Min(width - 1, x + size), Mathf.Max(0, y - size)],           // upper right corner
@@ -86,6 +84,10 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Diamond(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
+        if (y == 0) {
+            return;
+        }
+
         float[] edges = {
           heightMap[x, Mathf.Max(0, y - size)],               // top edge
           heightMap[Mathf.Min(width - 1, x + size), y],       // right edge
