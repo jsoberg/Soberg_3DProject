@@ -6,8 +6,9 @@ public class HeightBasedSplatMap : TextureAlphaGenerator
 {
     public float PercentageOfTextureBasedOnHeight = .8f;
 
-    public override void RegenerateTextureAlphas()
+    public override float[,,] GenerateTextureAlphas(float[,] heightmap, float maxHeight, int alphamapWidth, int alphamapHeight)
     {
+        // TODO: This is using terrain data on a different thread, need to fix this if I want to continue using it.
         Terrain terrain = GetComponent<Terrain>();
         TerrainData terrainData = terrain.terrainData;
 
@@ -53,6 +54,7 @@ public class HeightBasedSplatMap : TextureAlphaGenerator
 
         // Finally assign the new splatmap to the terrainData:
         terrainData.SetAlphamaps(0, 0, splatmapData);
+        return splatmapData;
     }
 
     int GetSplatMapToShow(float minHeight, float maxHeight, float height, int numLayers)

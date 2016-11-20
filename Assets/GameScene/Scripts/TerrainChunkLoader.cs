@@ -8,6 +8,7 @@ public class TerrainChunkLoader : MonoBehaviour
     public Terrain BackTerrain;
 
     public HeightmapGenerator HeightmapGenerator;
+    public TextureAlphaGenerator TextureAlphaGenerator;
     public int ThreshholdForChunkLoad = 1024;
 
     private float CurrentChunkEndX = 0;
@@ -15,9 +16,7 @@ public class TerrainChunkLoader : MonoBehaviour
     void Start()
     {
         GenerateInitial(BackTerrain.terrainData);
-        BackTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
         GenerateInitial(FrontTerrain.terrainData);
-        FrontTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
         CurrentChunkEndX += FrontTerrain.terrainData.size.x * 2;
 
         // Start loading up for when we swap later on.
@@ -25,7 +24,7 @@ public class TerrainChunkLoader : MonoBehaviour
         int width = frontTd.heightmapWidth;
         int height = frontTd.heightmapHeight;
         int max = (int)frontTd.size.y;
-        LoadNextHeightmapAsync(width, height, max);
+        LoadNextChunkDataAsync(width, height, max, frontTd.alphamapWidth, frontTd.alphamapHeight);
     }
 
     private void GenerateInitial(TerrainData td)
@@ -35,7 +34,9 @@ public class TerrainChunkLoader : MonoBehaviour
         int max = (int) td.size.y;
 
         float[,] heightmap = HeightmapGenerator.GenerateHeightMap(width, height, max);
+        float[,,] alphaMap = TextureAlphaGenerator.GenerateTextureAlphas(heightmap, max, td.alphamapWidth, td.alphamapHeight);
         td.SetHeights(0,0, heightmap);
+        td.SetAlphamaps(0,0, alphaMap);
     }
 
 	void Update ()
@@ -45,11 +46,12 @@ public class TerrainChunkLoader : MonoBehaviour
             MoveBackTerrainUpAndSwap();
 
             TerrainData loadedTerrain = FrontTerrain.terrainData;
-            float[,] heightmap = WaitForNextHeightmap();
-            loadedTerrain.SetHeights(0,0, heightmap);
-            FrontTerrain.GetComponent<TextureAlphaGenerator>().RegenerateTextureAlphas();
-            LoadNextHeightmapAsync(
-                loadedTerrain.heightmapWidth, loadedTerrain.heightmapHeight, (int)loadedTerrain.size.y);
+            WaitForNextChunkData();
+            loadedTerrain.SetHeights(0,0, NextHeightmap);
+            loadedTerrain.SetAlphamaps(0, 0, NextAlphaMap);
+
+            LoadNextChunkDataAsync(
+                loadedTerrain.heightmapWidth, loadedTerrain.heightmapHeight, (int)loadedTerrain.size.y, loadedTerrain.alphamapWidth, loadedTerrain.alphamapHeight);
         }
 	}
 
@@ -69,32 +71,35 @@ public class TerrainChunkLoader : MonoBehaviour
         CurrentChunkEndX += movement / 2;
     }
 
-    private float[,] WaitForNextHeightmap()
+    private void WaitForNextChunkData()
     {
-        while (AtomicIsLoadingNextHeightmap) {
+        while (AtomicIsLoadingNextChunkData) {
             Thread.Sleep(1);
         }
-        return NextHeightmap;
     }
 
-    private bool AtomicIsLoadingNextHeightmap = false;
+    private bool AtomicIsLoadingNextChunkData = false;
     private float[,] NextHeightmap = null;
+    private float[,,] NextAlphaMap = null;
 
-    private void LoadNextHeightmapAsync(int width, int height, int max)
+    private void LoadNextChunkDataAsync(int width, int height, int max, int alphamapWidth, int alphamapHeight)
     {
-        var thread = new Thread(() => LoadNextHeightmap(width, height, max));
+        var thread = new Thread(() => LoadNextChunkData(width, height, max, alphamapWidth, alphamapHeight));
         thread.Start();
     }
 
-    private void LoadNextHeightmap(int width, int height, int max)
+    private void LoadNextChunkData(int width, int height, int max, int alphamapWidth, int alphamapHeight)
     {
         // Signal that we are loading the next heightmap.
-        AtomicIsLoadingNextHeightmap = true;
+        AtomicIsLoadingNextChunkData = true;
 
         NextHeightmap = null;
+        NextAlphaMap = null;
+
         NextHeightmap = HeightmapGenerator.GenerateHeightMap(width, height, max);
+        NextAlphaMap = TextureAlphaGenerator.GenerateTextureAlphas(NextHeightmap, max, alphamapWidth, alphamapHeight);
 
         // We're done loading.
-        AtomicIsLoadingNextHeightmap = false;
+        AtomicIsLoadingNextChunkData = false;
     }
 }

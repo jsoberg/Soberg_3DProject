@@ -3,5 +3,5 @@ using System.Collections;
 
 public abstract class TextureAlphaGenerator : MonoBehaviour
 {
-    public abstract void RegenerateTextureAlphas();
+    public abstract float[,,] GenerateTextureAlphas(float[,] heightmap, float maxHeight, int alphamapWidth, int alphamapHeight);
 }
