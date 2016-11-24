@@ -9,7 +9,7 @@ public class TerrainChunkLoader : MonoBehaviour
 
     public HeightmapGenerator HeightmapGenerator;
     public TextureAlphaGenerator TextureAlphaGenerator;
-    public int ThreshholdForChunkLoad = 2 ^ 16;
+    public int ThreshholdForChunkLoad = 2 ^ 17;
 
     private float CurrentChunkEndX = 0;
 
