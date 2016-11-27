@@ -6,6 +6,7 @@ public class TerrainChunkLoader : MonoBehaviour
 {
     public Terrain FrontTerrain;
     public Terrain BackTerrain;
+    public GameObject Water;
 
     public HeightmapGenerator HeightmapGenerator;
     public TextureAlphaGenerator TextureAlphaGenerator;
@@ -59,7 +60,10 @@ public class TerrainChunkLoader : MonoBehaviour
     {
         float movement = BackTerrain.terrainData.size.x * 2;
         Vector3 moveTranslation = new Vector3(movement, 0, 0);
+        Vector3 halfMoveTranslation = new Vector3(movement/2f, 0, 0);
+        // Move the back terrain and water up.
         BackTerrain.transform.Translate(moveTranslation);
+        Water.transform.Translate(halfMoveTranslation);
 
         Terrain oldFront = FrontTerrain;
         FrontTerrain = BackTerrain;
