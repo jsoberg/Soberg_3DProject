@@ -4,7 +4,7 @@ using System.Linq;
 
 public class MountainSideSplatMapGenerator : TextureAlphaGenerator
 {
-    public int NumAlphamapLayers = 5;
+    public int NumAlphamapLayers = 2;
 
     public override float[,,] GenerateTextureAlphas(float[,] heightmap, float maxHeight, int alphamapWidth, int alphamapHeight)
     { 
@@ -26,15 +26,18 @@ public class MountainSideSplatMapGenerator : TextureAlphaGenerator
                 float[] splatWeights = new float[NumAlphamapLayers];
 
                 // Texture[0] has constant influence
-                splatWeights[0] = 0.8f;
+               // splatWeights[0] = 0.8f;
                 // Texture[1] is stronger at lower altitudes
-                splatWeights[1] = Mathf.Clamp01((heightmapHeight - height));
+               // splatWeights[1] = Mathf.Clamp01((heightmapHeight - height));
                 // Texture[2] stronger on flatter terrain
+
+
+
                 // Note "steepness" is unbounded, so we "normalise" it by dividing by the extent of heightmap height and scale factor
                 // Subtract result from 1.0 to give greater weighting to flat surfaces
-                splatWeights[2] = 2.0f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f));
+                splatWeights[0] = 2.0f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f));
                 // Texture[3] increases with height but only on surfaces facing positive Z axis 
-                splatWeights[3] = (height / 32) * Mathf.Clamp01(normal.z);
+                splatWeights[1] = (height / 32) * Mathf.Clamp01(normal.z);
 
                 // Sum of all textures weights must add to 1, so calculate normalization factor from sum of weights
                 float z = splatWeights.Sum();
@@ -70,30 +73,5 @@ public class MountainSideSplatMapGenerator : TextureAlphaGenerator
         Vector3 normal = new Vector3(-slopeX, 2, slopeZ);
         normal.Normalize();
         return normal;
-    }
-
-    // Add some random "noise" to the alphamaps.
-    void AddAlphaNoise(Terrain t, float noiseScale)
-    {
-        float[,,] maps = t.terrainData.GetAlphamaps(0, 0, t.terrainData.alphamapWidth, t.terrainData.alphamapHeight);
-
-        for (int y = 0; y < t.terrainData.alphamapHeight; y++)
-        {
-            for (int x = 0; x < t.terrainData.alphamapWidth; x++)
-            {
-                float a0 = maps[x, y, 0];
-                float a1 = maps[x, y, 1];
-
-                a0 += Random.value * noiseScale;
-                a1 += Random.value * noiseScale;
-
-                float total = a0 + a1;
-
-                maps[x, y, 0] = a0 / total;
-                maps[x, y, 1] = a1 / total;
-            }
-        }
-
-        t.terrainData.SetAlphamaps(0, 0, maps);
     }
 }
