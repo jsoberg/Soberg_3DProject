@@ -4,11 +4,11 @@ using System.Linq;
 
 public class MountainSideSplatMapGenerator : TextureAlphaGenerator
 {
-    public int NumAlphamapLayers = 2;
+    public float SandHeight;
 
     public override float[,,] GenerateTextureAlphas(float[,] heightmap, float maxHeight, int alphamapWidth, int alphamapHeight)
     { 
-        float[,,] splatmapData = new float[alphamapWidth, alphamapHeight, NumAlphamapLayers];
+        float[,,] splatmapData = new float[alphamapWidth, alphamapHeight, 3];
         float heightmapHeight = heightmap.GetLength(0);
         float heightmapWidth = heightmap.GetLength(1);
 
@@ -20,21 +20,26 @@ public class MountainSideSplatMapGenerator : TextureAlphaGenerator
                 float y_01 = (float) y / (float) alphamapHeight;
                 float x_01 = (float) x / (float) alphamapWidth;
 
-                float height = heightmap[Mathf.RoundToInt(y_01 * heightmapHeight), Mathf.RoundToInt(x_01 * heightmapWidth)] * maxHeight;
+                float height = heightmap[Mathf.RoundToInt(x_01 * heightmapWidth), Mathf.RoundToInt(y_01 * heightmapHeight)] * maxHeight;
                 Vector3 normal = GetInterpolatedNormal(heightmap, x, y, maxHeight);
                 float steepness = Mathf.Acos(Vector3.Dot(normal, Vector3.up));
-                float[] splatWeights = new float[NumAlphamapLayers];
+                float[] splatWeights = new float[3];
 
-                // Texture[0] stronger on flatter terrain
-                splatWeights[0] = 1.0f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f));
-                // Texture[1] increases with height but only on surfaces facing positive Z axis 
-                splatWeights[1] = (height / 32) * Mathf.Clamp01(normal.z);
+                if (height > SandHeight) {
+                    // Texture[0] stronger on flatter terrain
+                    splatWeights[0] = Mathf.Abs(0.5f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f)));
+                    // Texture[1] increases with height but only on surfaces facing positive Z axis 
+                    splatWeights[1] = (height / 8) * Mathf.Clamp01(normal.z);
+                } else {
+                    // Texture[2] is used for sand.
+                    splatWeights[2] = 1f;
+                }
 
                 // Sum of all textures weights must add to 1, so calculate normalization factor from sum of weights
                 float z = splatWeights.Sum();
 
                 // Loop through each terrain texture
-                for (int i = 0; i < NumAlphamapLayers; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     // Normalize so that sum of all texture weights = 1
                     splatWeights[i] /= z;
