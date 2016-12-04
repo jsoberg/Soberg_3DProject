@@ -16,6 +16,7 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
         BlendHeightmapEdges(heightMap, width, height);
 
         Divide(height, heightMap, width, height, max);
+        NormalizeHeightmap(heightMap);
 
         LastHeightMap = heightMap;
         return heightMap;
@@ -95,5 +96,19 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
           heightMap[Mathf.Max(0, x - size), y] };             // left edge
 
         heightMap[x, y] = (edges.Average() + offset) <= max ? (edges.Average() + offset) : (edges.Average() - offset);
+    }
+
+    private void NormalizeHeightmap(float[,] heightMap)
+    {
+        for (int i = 0; i < heightMap.GetLength(0); i ++)
+        {
+            for (int j = 0; j < heightMap.GetLength(0); j++)
+            {
+                float val = heightMap[i, j];
+                val = Mathf.Max(val, 0);
+                val = Mathf.Min(val, 1);
+                heightMap[i, j] = val;
+            }
+        }
     }
 }
