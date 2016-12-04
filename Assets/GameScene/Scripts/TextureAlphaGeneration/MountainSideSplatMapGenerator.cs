@@ -26,9 +26,7 @@ public class MountainSideSplatMapGenerator : TextureAlphaGenerator
                 float[] splatWeights = new float[NumAlphamapLayers];
 
                 // Texture[0] stronger on flatter terrain
-                // Note "steepness" is unbounded, so we "normalise" it by dividing by the extent of heightmap height and scale factor
-                // Subtract result from 1.0 to give greater weighting to flat surfaces
-                splatWeights[0] = 2.0f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f));
+                splatWeights[0] = 1.0f - Mathf.Clamp01(steepness * steepness / (heightmapHeight / 5.0f));
                 // Texture[1] increases with height but only on surfaces facing positive Z axis 
                 splatWeights[1] = (height / 32) * Mathf.Clamp01(normal.z);
 
