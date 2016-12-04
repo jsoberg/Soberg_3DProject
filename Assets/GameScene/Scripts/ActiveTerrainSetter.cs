@@ -17,15 +17,20 @@ public class ActiveTerrainSetter : MonoBehaviour
 
     void Update ()
     {
-        Ray downRay = new Ray(Camera.main.transform.position, new Vector3(0, -MaxDistance, 0));
-        Ray upRay = new Ray(Camera.main.transform.position, new Vector3(0, MaxDistance, 0));
+        ActiveTerrain = GetTerrainUnderWorldPoint(Camera.main.transform.position);
+	}
+
+    public Terrain GetTerrainUnderWorldPoint(Vector3 worldPoint)
+    {
+        Ray downRay = new Ray(worldPoint, new Vector3(0, -MaxDistance, 0));
+        Ray upRay = new Ray(worldPoint, new Vector3(0, MaxDistance, 0));
 
         Collider terrainCollider = TerrainOne.GetComponent<Collider>();
         RaycastHit hit;
         if (terrainCollider.Raycast(downRay, out hit, MaxDistance) || terrainCollider.Raycast(upRay, out hit, MaxDistance)) {
-            ActiveTerrain = TerrainOne;
+            return TerrainOne;
         } else {
-            ActiveTerrain = TerrainTwo;
+            return TerrainTwo;
         }
-	}
+    }
 }
