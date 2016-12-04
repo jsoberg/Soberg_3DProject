@@ -69,7 +69,7 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Square(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
-        if (y == 0) {
+        if (y == 0 || y == heightMap.GetLength(1) - 1) {
             return;
         }
 
@@ -84,7 +84,7 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Diamond(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
-        if (y == 0) {
+        if (y == 0 || y == heightMap.GetLength(1) - 1) {
             return;
         }
 
