@@ -4,32 +4,33 @@ using System.Threading;
 
 public class TerrainChunkLoader : MonoBehaviour
 {
-    public Terrain FrontTerrain;
-    public Terrain BackTerrain;
+    public Terrain TerrainPrefab;
+    public TerrainData TerrainDataPrefab;
     public GameObject Water;
 
     public HeightmapGenerator HeightmapGenerator;
     public TextureAlphaGenerator TextureAlphaGenerator;
-    public int ThreshholdForChunkLoad = 2 ^ 16;
+    public int ThreshholdForChunkLoad;
 
     private float CurrentChunkEndX = 0;
 
     void Start()
     {
-        GenerateInitial(BackTerrain.terrainData);
-        GenerateInitial(FrontTerrain.terrainData);
-        CurrentChunkEndX += FrontTerrain.terrainData.size.x * 2;
+        CurrentChunkEndX += 4096;
 
-        // Start loading up for when we swap later on.
-        TerrainData frontTd = FrontTerrain.terrainData;
-        int width = frontTd.heightmapWidth;
-        int height = frontTd.heightmapHeight;
-        int max = (int)frontTd.size.y;
-        LoadNextChunkDataAsync(width, height, max, frontTd.alphamapWidth, frontTd.alphamapHeight);
+        // Start loading up for when we load later on.
+        TerrainData initialTd = GenerateNewTerrainWithHeightmaps().terrainData;
+        int width = initialTd.heightmapWidth;
+        int height = initialTd.heightmapHeight;
+        int max = (int) initialTd.size.y;
+        LoadNextChunkDataAsync(width, height, max, initialTd.alphamapWidth, initialTd.alphamapHeight);
     }
 
-    private void GenerateInitial(TerrainData td)
+    private Terrain GenerateNewTerrainWithHeightmaps()
     {
+        Terrain newTerrainChunk = GenerateNewTerrain();
+        TerrainData td = newTerrainChunk.terrainData;
+
         int width = td.heightmapWidth; 
         int height = td.heightmapHeight;
         int max = (int) td.size.y;
@@ -38,42 +39,37 @@ public class TerrainChunkLoader : MonoBehaviour
         float[,,] alphaMap = TextureAlphaGenerator.GenerateTextureAlphas(heightmap, max, td.alphamapWidth, td.alphamapHeight);
         td.SetHeights(0,0, heightmap);
         td.SetAlphamaps(0,0, alphaMap);
+
+        return newTerrainChunk;
     }
 
-	void Update ()
+    private Terrain GenerateNewTerrain()
+    {
+        Terrain newTerrainChunk = Object.Instantiate(TerrainPrefab);
+        TerrainData td = Object.Instantiate(TerrainDataPrefab);
+        newTerrainChunk.terrainData = td;
+        return newTerrainChunk;
+    }
+
+    void Update()
     {
         Vector3 camPosition = Camera.main.transform.position;
-        if ((CurrentChunkEndX - camPosition.x) < ThreshholdForChunkLoad) {
-            MoveBackTerrainUpAndSwap();
-
-            TerrainData loadedTerrain = FrontTerrain.terrainData;
+        if ((CurrentChunkEndX - camPosition.x) < ThreshholdForChunkLoad)
+        {
+            Terrain loadedTerrain = GenerateNewTerrain();
+            TerrainData loadedTerrainData = loadedTerrain.terrainData;
             WaitForNextChunkData();
-            loadedTerrain.SetHeights(0,0, NextHeightmap);
-            loadedTerrain.SetAlphamaps(0, 0, NextAlphaMap);
+            loadedTerrainData.SetHeights(0, 0, NextHeightmap);
+            loadedTerrainData.SetAlphamaps(0, 0, NextAlphaMap);
+            loadedTerrain.transform.position += new Vector3(CurrentChunkEndX, 0, 0);
+
+            CurrentChunkEndX += 4096;
 
             LoadNextChunkDataAsync(
-                loadedTerrain.heightmapWidth, loadedTerrain.heightmapHeight, (int)loadedTerrain.size.y, loadedTerrain.alphamapWidth, loadedTerrain.alphamapHeight);
+                loadedTerrainData.heightmapWidth, loadedTerrainData.heightmapHeight, (int)loadedTerrainData.size.y, loadedTerrainData.alphamapWidth, loadedTerrainData.alphamapHeight);
         }
-	}
-
-    private void MoveBackTerrainUpAndSwap()
-    {
-        float movement = BackTerrain.terrainData.size.x * 2;
-        Vector3 moveTranslation = new Vector3(movement, 0, 0);
-        Vector3 halfMoveTranslation = new Vector3(movement/2f, 0, 0);
-        // Move the back terrain and water up.
-        BackTerrain.transform.Translate(moveTranslation);
-        Water.transform.Translate(halfMoveTranslation);
-
-        Terrain oldFront = FrontTerrain;
-        FrontTerrain = BackTerrain;
-        BackTerrain = oldFront;
-
-        BackTerrain.SetNeighbors(null, FrontTerrain, null, null);
-        FrontTerrain.SetNeighbors(null, null, null, BackTerrain);
-
-        CurrentChunkEndX += movement / 2;
     }
+	
 
     private void WaitForNextChunkData()
     {

@@ -3,14 +3,11 @@ using System.Collections;
 
 public class ActiveTerrainSetter : MonoBehaviour
 {
-    public Terrain TerrainOne;
-    public Terrain TerrainTwo;
-
     public Terrain ActiveTerrain { get; internal set; }
 
     public ActiveTerrainSetter()
     {
-        ActiveTerrain = TerrainOne;
+        ActiveTerrain = null;
     }
 
     public float MaxDistance;
@@ -25,12 +22,13 @@ public class ActiveTerrainSetter : MonoBehaviour
         Ray downRay = new Ray(worldPoint, new Vector3(0, -MaxDistance, 0));
         Ray upRay = new Ray(worldPoint, new Vector3(0, MaxDistance, 0));
 
-        Collider terrainCollider = TerrainOne.GetComponent<Collider>();
-        RaycastHit hit;
-        if (terrainCollider.Raycast(downRay, out hit, MaxDistance) || terrainCollider.Raycast(upRay, out hit, MaxDistance)) {
-            return TerrainOne;
-        } else {
-            return TerrainTwo;
-        }
+        //Collider myCollider = GetComponent<Collider>();
+        //RaycastHit hit;
+        //if (myCollider.Raycast(downRay, out hit, MaxDistance)) {
+         //   return null; //(Terrain) hit.collider.gameObject;
+        //} else if (myCollider.Raycast(upRay, out hit, MaxDistance)) {
+        //    return null; //(Terrain) hit.collider.gameObject;
+        //}
+        return null;
     }
 }
