@@ -56,26 +56,32 @@ public class TerrainChunkLoader : MonoBehaviour
         Vector3 camPosition = Camera.main.transform.position;
         if ((CurrentChunkEndX - camPosition.x) < ThreshholdForChunkLoad)
         {
-            Terrain loadedTerrain = GenerateNewTerrain();
-            TerrainData loadedTerrainData = loadedTerrain.terrainData;
-            WaitForNextChunkData();
-            loadedTerrainData.SetHeights(0, 0, NextHeightmap);
-            loadedTerrainData.SetAlphamaps(0, 0, NextAlphaMap);
-            loadedTerrain.transform.position += new Vector3(CurrentChunkEndX, 0, 0);
-
+            StartCoroutine(GenerateNextChunkCoroutine());
             CurrentChunkEndX += 4096;
-
-            LoadNextChunkDataAsync(
-                loadedTerrainData.heightmapWidth, loadedTerrainData.heightmapHeight, (int)loadedTerrainData.size.y, loadedTerrainData.alphamapWidth, loadedTerrainData.alphamapHeight);
         }
     }
-	
 
-    private void WaitForNextChunkData()
+    private IEnumerator GenerateNextChunkCoroutine()
     {
+        Terrain loadedTerrain = GenerateNewTerrain();
+        TerrainData loadedTerrainData = loadedTerrain.terrainData;
+        loadedTerrain.transform.position += new Vector3(CurrentChunkEndX, 0, 0);
+
+        // yield until our chunk data is loaded.
         while (AtomicIsLoadingNextChunkData) {
-            Thread.Sleep(1);
+            yield return null;
         }
+
+        // Set our heightmap and then yield (this takes a bit to be set.)
+        loadedTerrainData.SetHeights(0, 0, NextHeightmap);
+        yield return null;
+
+        // Set our alphamap and then yield (this takes a bit to be set.)
+        loadedTerrainData.SetAlphamaps(0, 0, NextAlphaMap);
+        yield return null;
+
+        // Start the next chunk loading.
+        LoadNextChunkDataAsync(loadedTerrainData.heightmapWidth, loadedTerrainData.heightmapHeight, (int)loadedTerrainData.size.y, loadedTerrainData.alphamapWidth, loadedTerrainData.alphamapHeight);
     }
 
     private bool AtomicIsLoadingNextChunkData = false;

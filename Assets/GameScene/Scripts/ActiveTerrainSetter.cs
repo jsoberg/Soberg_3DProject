@@ -22,13 +22,13 @@ public class ActiveTerrainSetter : MonoBehaviour
         Ray downRay = new Ray(worldPoint, new Vector3(0, -MaxDistance, 0));
         Ray upRay = new Ray(worldPoint, new Vector3(0, MaxDistance, 0));
 
-        //Collider myCollider = GetComponent<Collider>();
-        //RaycastHit hit;
-        //if (myCollider.Raycast(downRay, out hit, MaxDistance)) {
-         //   return null; //(Terrain) hit.collider.gameObject;
-        //} else if (myCollider.Raycast(upRay, out hit, MaxDistance)) {
-        //    return null; //(Terrain) hit.collider.gameObject;
-        //}
+        Collider myCollider = Camera.main.GetComponent<BoxCollider>();
+        RaycastHit hit;
+        if (myCollider.Raycast(downRay, out hit, MaxDistance)) {
+           return null; //(Terrain) hit.collider.gameObject;
+        } else if (myCollider.Raycast(upRay, out hit, MaxDistance)) {
+            return null; //(Terrain) hit.collider.gameObject;
+        }
         return null;
     }
 }
