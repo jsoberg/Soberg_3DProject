@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Threading;
+using System.Collections.Generic;
 
 public class TerrainChunkLoader : MonoBehaviour
 {
@@ -12,18 +12,13 @@ public class TerrainChunkLoader : MonoBehaviour
     public TextureAlphaGenerator TextureAlphaGenerator;
     public int ThreshholdForChunkLoad;
 
-    private float CurrentChunkEndX = 0;
+    private readonly Stack<TerrainChunkInfo> ChunkInfoStack = new Stack<TerrainChunkInfo>();
 
     void Start()
     {
-        CurrentChunkEndX += 4096;
-
-        // Start loading up for when we load later on.
-        TerrainData initialTd = GenerateNewTerrainWithHeightmaps().terrainData;
-        int width = initialTd.heightmapWidth;
-        int height = initialTd.heightmapHeight;
-        int max = (int) initialTd.size.y;
-        LoadNextChunkDataAsync(width, height, max, initialTd.alphamapWidth, initialTd.alphamapHeight);
+        Terrain initialTerrain = GenerateNewTerrainWithHeightmaps();
+        TerrainData initialTd = initialTerrain.terrainData;
+        ChunkInfoStack.Push(new TerrainChunkInfo(initialTerrain.transform.position, (int)initialTd.size.x, (int)initialTd.size.z));
     }
 
     private Terrain GenerateNewTerrainWithHeightmaps()
@@ -54,58 +49,71 @@ public class TerrainChunkLoader : MonoBehaviour
     void Update()
     {
         Vector3 camPosition = Camera.main.transform.position;
-        if ((CurrentChunkEndX - camPosition.x) < ThreshholdForChunkLoad)
+        if (!DoesChunkExistForPosition(camPosition))
         {
-            StartCoroutine(GenerateNextChunkCoroutine());
-            CurrentChunkEndX += 4096;
+            StartCoroutine(GenerateNextChunkCoroutine(camPosition));
         }
     }
 
-    private IEnumerator GenerateNextChunkCoroutine()
+    private bool DoesChunkExistForPosition(Vector3 position)
+    {
+        foreach (TerrainChunkInfo info in ChunkInfoStack)
+        {
+            int endX = info.Width + (int) info.Position.x;
+            int endZ = info.Height + (int) info.Position.z;
+            if ((position.x < endX && position.x > info.Position.x) && (position.z < endZ && position.z > info.Position.z))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private IEnumerator GenerateNextChunkCoroutine(Vector3 positionToGenerateFor)
     {
         Terrain loadedTerrain = GenerateNewTerrain();
-        TerrainData loadedTerrainData = loadedTerrain.terrainData;
-        loadedTerrain.transform.position += new Vector3(CurrentChunkEndX, 0, 0);
+        TerrainData td = loadedTerrain.terrainData;
+        int terrainWidth = (int) td.size.x;
+        int terrainHeight = (int) td.size.y;
 
+        int x = ((int) positionToGenerateFor.x / terrainWidth) * terrainWidth;
+        int z = ((int) positionToGenerateFor.z / terrainHeight) * terrainHeight;
+
+        loadedTerrain.transform.position += new Vector3(x, 0, z);
+        ChunkInfoStack.Push(new TerrainChunkInfo(loadedTerrain.transform.position, (int) td.size.x, (int) td.size.y));
+
+        int heightmapWidth = td.heightmapWidth;
+        int heightmapHeight = td.heightmapHeight;
+        int max = (int) td.size.y;
+
+        AsyncTerrainGenerator generator = new AsyncTerrainGenerator(HeightmapGenerator, TextureAlphaGenerator);
+        generator.LoadNextChunkDataAsync(heightmapWidth, heightmapHeight, max, td.alphamapWidth, td.alphamapHeight);
         // yield until our chunk data is loaded.
-        while (AtomicIsLoadingNextChunkData) {
+        while (generator.AtomicIsLoadingNextChunkData)
+        {
             yield return null;
         }
 
         // Set our heightmap and then yield (this takes a bit to be set.)
-        loadedTerrainData.SetHeights(0, 0, NextHeightmap);
+        td.SetHeights(0, 0, generator.NextHeightmap);
         yield return null;
 
         // Set our alphamap and then yield (this takes a bit to be set.)
-        loadedTerrainData.SetAlphamaps(0, 0, NextAlphaMap);
+        td.SetAlphamaps(0, 0, generator.NextAlphaMap);
         yield return null;
-
-        // Start the next chunk loading.
-        LoadNextChunkDataAsync(loadedTerrainData.heightmapWidth, loadedTerrainData.heightmapHeight, (int)loadedTerrainData.size.y, loadedTerrainData.alphamapWidth, loadedTerrainData.alphamapHeight);
     }
 
-    private bool AtomicIsLoadingNextChunkData = false;
-    private float[,] NextHeightmap = null;
-    private float[,,] NextAlphaMap = null;
-
-    private void LoadNextChunkDataAsync(int width, int height, int max, int alphamapWidth, int alphamapHeight)
+    private class TerrainChunkInfo
     {
-        var thread = new Thread(() => LoadNextChunkData(width, height, max, alphamapWidth, alphamapHeight));
-        thread.Start();
-    }
+        public Vector3 Position;
+        public int Width;
+        public int Height;
 
-    private void LoadNextChunkData(int width, int height, int max, int alphamapWidth, int alphamapHeight)
-    {
-        // Signal that we are loading the next heightmap.
-        AtomicIsLoadingNextChunkData = true;
-
-        NextHeightmap = null;
-        NextAlphaMap = null;
-
-        NextHeightmap = HeightmapGenerator.GenerateHeightMap(width, height, max);
-        NextAlphaMap = TextureAlphaGenerator.GenerateTextureAlphas(NextHeightmap, max, alphamapWidth, alphamapHeight);
-
-        // We're done loading.
-        AtomicIsLoadingNextChunkData = false;
+        public TerrainChunkInfo(Vector3 position, int width, int height)
+        {
+            this.Position = position;
+            this.Width = width;
+            this.Height = height;
+        }
     }
 }
