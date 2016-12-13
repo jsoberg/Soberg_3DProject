@@ -61,12 +61,17 @@ public class TerrainChunkLoader : MonoBehaviour
         {
             int endX = info.Width + (int) info.Position.x;
             int endZ = info.Height + (int) info.Position.z;
-            if ((position.x < endX && position.x > info.Position.x) && (position.z < endZ && position.z > info.Position.z))
+            if (isWithinParameters(position.x, info.Position.x, endX) && isWithinParameters(position.z, info.Position.z, endZ))
             {
                 return true;
             }
         }
         return false;
+    }
+
+    private bool isWithinParameters(float value, float startParam, float endParam)
+    {
+        return (value < endParam && value > startParam);
     }
 
     private IEnumerator GenerateNextChunkCoroutine(Vector3 positionToGenerateFor)
@@ -76,11 +81,20 @@ public class TerrainChunkLoader : MonoBehaviour
         int terrainWidth = (int) td.size.x;
         int terrainHeight = (int) td.size.y;
 
-        int x = ((int) positionToGenerateFor.x / terrainWidth) * terrainWidth;
-        int z = ((int) positionToGenerateFor.z / terrainHeight) * terrainHeight;
+        float x = ((int) positionToGenerateFor.x / terrainWidth) * terrainWidth;
+        if (positionToGenerateFor.x < 0)
+        {
+            x -= terrainWidth;
+        }
 
-        loadedTerrain.transform.position += new Vector3(x, 0, z);
-        ChunkInfoStack.Push(new TerrainChunkInfo(loadedTerrain.transform.position, (int) td.size.x, (int) td.size.y));
+        float z = ((int) positionToGenerateFor.z / terrainHeight) * terrainHeight;
+        if (positionToGenerateFor.z < 0)
+        {
+            z -= terrainHeight;
+        }
+
+        loadedTerrain.transform.position = new Vector3(x, 0, z);
+        ChunkInfoStack.Push(new TerrainChunkInfo(loadedTerrain.transform.position, terrainWidth, terrainHeight));
 
         int heightmapWidth = td.heightmapWidth;
         int heightmapHeight = td.heightmapHeight;
