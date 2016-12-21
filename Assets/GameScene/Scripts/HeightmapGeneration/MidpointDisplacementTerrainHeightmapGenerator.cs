@@ -16,7 +16,12 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
         BlendHeightmapEdges(heightMap, width, height);
 
         Divide(height, heightMap, width, height, max);
-        SmoothHeightmap(heightMap, width, height);
+
+        // Run three passes of heightmap smoothing for more realistic terrain.
+        for (int i = 0; i < 3; i++)
+        {
+            SmoothHeightmap(heightMap, width, height);
+        }
 
         return heightMap;
     }
