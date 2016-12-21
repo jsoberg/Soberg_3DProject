@@ -16,9 +16,8 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
         BlendHeightmapEdges(heightMap, width, height);
 
         Divide(height, heightMap, width, height, max);
-        NormalizeHeightmap(heightMap);
+        SmoothHeightmap(heightMap, width, height);
 
-        LastHeightMap = heightMap;
         return heightMap;
     }
 
@@ -28,9 +27,10 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
             return;
         }
 
-        for (int i = 0; i < width; i++) {
-            heightMap[i, (height - 1)] = LastHeightMap[i, 0];
-        }
+        // This was from only blending front and back terrains.
+        //for (int i = 0; i < width; i++) {
+           // heightMap[i, (height - 1)] = LastHeightMap[i, 0];
+        //}
     }
 
     private void SeedHeightmap(float[,] heightMap, int width, int height)
@@ -70,7 +70,7 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Square(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
-        if (y == 0 || y == heightMap.GetLength(1) - 1) {
+        if (x == 0 || x == heightMap.GetLength(0) - 1 || y == 0 || y == heightMap.GetLength(1) - 1) {
             return;
         }
 
@@ -85,7 +85,7 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
 
     private void Diamond(int x, int y, int width, int height, int max, int size, float offset, float[,] heightMap)
     {
-        if (y == 0 || y == heightMap.GetLength(1) - 1) {
+        if (x == 0 || x == heightMap.GetLength(0) - 1 || y == 0 || y == heightMap.GetLength(1) - 1) {
             return;
         }
 
@@ -98,17 +98,31 @@ public class MidpointDisplacementTerrainHeightmapGenerator : HeightmapGenerator
         heightMap[x, y] = (edges.Average() + offset) <= max ? (edges.Average() + offset) : (edges.Average() - offset);
     }
 
-    private void NormalizeHeightmap(float[,] heightMap)
+    private void SmoothHeightmap(float[,] heightMap, int width, int height)
     {
         for (int i = 0; i < heightMap.GetLength(0); i ++)
         {
             for (int j = 0; j < heightMap.GetLength(0); j++)
             {
-                float val = heightMap[i, j];
-                val = Mathf.Max(val, 0);
-                val = Mathf.Min(val, 1);
-                heightMap[i, j] = val;
+                if (i >= width - 2 || i < 2 || j >= height - 2|| j < 2) {
+                    continue;
+                }
+
+                float[] surrounding = {
+                    heightMap[i - 1, j - 1],
+                    heightMap[i - 1, j],
+                    heightMap[i - 1, j + 1],
+                    heightMap[i, j - 1],
+                    heightMap[i, j],
+                    heightMap[i, j + 1],
+                    heightMap[i + 1, j],
+                    heightMap[i + 1, j + 1],
+                    heightMap[i + 1, j - 1],
+                };       
+
+                heightMap[i, j] = surrounding.Average();
             }
         }
     }
+
 }
