@@ -49,12 +49,27 @@ public class TerrainChunkLoader : MonoBehaviour
     void Update()
     {
         Vector3 camPosition = Camera.main.transform.position;
-        if (!DoesChunkExistForPosition(camPosition))
+        GenerateChunkForPositionIfNotExists(camPosition);
+
+        Vector3 forwardPosition = camPosition + new Vector3(ThreshholdForChunkLoad, 0, 0);
+        GenerateChunkForPositionIfNotExists(forwardPosition);
+        Vector3 behindPosition = camPosition + new Vector3(-ThreshholdForChunkLoad, 0, 0);
+        GenerateChunkForPositionIfNotExists(behindPosition);
+
+        Vector3 leftPosition = camPosition + new Vector3(0, 0, -ThreshholdForChunkLoad);
+        GenerateChunkForPositionIfNotExists(leftPosition);
+        Vector3 rightPosition = camPosition + new Vector3(0, 0, ThreshholdForChunkLoad);
+        GenerateChunkForPositionIfNotExists(forwardPosition);
+    }
+    
+    private void GenerateChunkForPositionIfNotExists(Vector3 position)
+    {
+        if (!DoesChunkExistForPosition(position))
         {
-            StartCoroutine(GenerateNextChunkCoroutine(camPosition));
+            GenerateChunkAndStartCoroutine(position);
         }
     }
-
+    
     private bool DoesChunkExistForPosition(Vector3 position)
     {
         foreach (TerrainChunkInfo info in ChunkInfoStack)
@@ -74,20 +89,20 @@ public class TerrainChunkLoader : MonoBehaviour
         return (value < endParam && value > startParam);
     }
 
-    private IEnumerator GenerateNextChunkCoroutine(Vector3 positionToGenerateFor)
+    private void GenerateChunkAndStartCoroutine(Vector3 positionToGenerateFor)
     {
         Terrain loadedTerrain = GenerateNewTerrain();
         TerrainData td = loadedTerrain.terrainData;
-        int terrainWidth = (int) td.size.x;
-        int terrainHeight = (int) td.size.y;
+        int terrainWidth = (int)td.size.x;
+        int terrainHeight = (int)td.size.y;
 
-        float x = ((int) positionToGenerateFor.x / terrainWidth) * terrainWidth;
+        float x = ((int)positionToGenerateFor.x / terrainWidth) * terrainWidth;
         if (positionToGenerateFor.x < 0)
         {
             x -= terrainWidth;
         }
 
-        float z = ((int) positionToGenerateFor.z / terrainHeight) * terrainHeight;
+        float z = ((int)positionToGenerateFor.z / terrainHeight) * terrainHeight;
         if (positionToGenerateFor.z < 0)
         {
             z -= terrainHeight;
@@ -96,6 +111,11 @@ public class TerrainChunkLoader : MonoBehaviour
         loadedTerrain.transform.position = new Vector3(x, 0, z);
         ChunkInfoStack.Push(new TerrainChunkInfo(loadedTerrain.transform.position, terrainWidth, terrainHeight));
 
+        StartCoroutine(GenerateTerrainChunkDataCoroutine(td));
+    }
+
+    private IEnumerator GenerateTerrainChunkDataCoroutine(TerrainData td)
+    {
         int heightmapWidth = td.heightmapWidth;
         int heightmapHeight = td.heightmapHeight;
         int max = (int) td.size.y;
